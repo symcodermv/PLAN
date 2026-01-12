@@ -1,0 +1,2176 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thauleem</title>
+    <meta name="description" content="Thauleem - Complete lesson planning platform for Maldivian teachers">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #000;
+            color: #fff;
+        }
+        
+        .bg-pageBg {
+            background-color: #000;
+        }
+        
+        .bg-cardBg {
+            background-color: #18181b;
+        }
+        
+        .border-borderClr {
+            border-color: #27272a;
+        }
+        
+        .text-softText {
+            color: #d4d4d8;
+        }
+        
+        .text-emerald-500 {
+            color: #10b981;
+        }
+        
+        .bg-emerald-500 {
+            background-color: #10b981;
+        }
+        
+        .border-zinc-800 {
+            border-color: #27272a;
+        }
+        
+        .bg-zinc-900 {
+            background-color: #18181b;
+        }
+        
+        .bg-zinc-800 {
+            background-color: #27272a;
+        }
+        
+        .text-zinc-400 {
+            color: #a1a1aa;
+        }
+        
+        .text-zinc-600 {
+            color: #52525b;
+        }
+        
+        .text-zinc-700 {
+            color: #3f3f46;
+        }
+        
+        .text-zinc-300 {
+            color: #d4d4d8;
+        }
+        
+        .sticky-nav {
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #000;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #444;
+        }
+        
+        /* Form styling */
+        .form-input {
+            background-color: #18181b;
+            border: 1px solid #27272a;
+            color: #fff;
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+        
+        .form-input::placeholder {
+            color: #71717a;
+        }
+        
+        /* Loading animation */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Smooth transitions */
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+        
+        /* Container animation */
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Modal animations */
+        .modal-enter {
+            animation: modalFadeIn 0.3s ease-out;
+        }
+        
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        /* Auth modal */
+        .auth-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+        
+        .auth-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .auth-tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            color: #a1a1aa;
+            font-weight: 500;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .auth-tab.active {
+            color: #10b981;
+            border-bottom-color: #10b981;
+        }
+        
+        .auth-tab:hover:not(.active) {
+            color: #fff;
+        }
+        
+        /* Copy button animation - Enhanced */
+        .copy-button {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .copy-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        
+        .copy-success {
+            animation: copySuccess 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        @keyframes copySuccess {
+            0% { 
+                transform: scale(1);
+                background-color: #27272a;
+            }
+            50% { 
+                transform: scale(1.1);
+                background-color: #10b981;
+                box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+            }
+            100% { 
+                transform: scale(1);
+                background-color: #10b981;
+            }
+        }
+        
+        /* File upload styling */
+        .file-upload-label {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .file-upload-label:hover {
+            background-color: #27272a;
+        }
+        
+        .file-upload-input {
+            opacity: 0;
+            position: absolute;
+            z-index: -1;
+        }
+        
+        /* Firebase auth status */
+        .auth-status {
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        
+        .auth-status.logged-in {
+            background-color: #10b98120;
+            color: #10b981;
+            border: 1px solid #10b98140;
+        }
+        
+        .auth-status.logged-out {
+            background-color: #ef444420;
+            color: #ef4444;
+            border: 1px solid #ef444440;
+        }
+        
+        /* Payment page hidden initially */
+        .payment-content {
+            display: none;
+        }
+        
+        .payment-content.active {
+            display: block;
+        }
+        
+        /* Welcome message styling */
+        .welcome-message {
+            background: linear-gradient(135deg, #10b981, #059669);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Mobile menu styles */
+        #mobile-menu-overlay {
+            transition: opacity 0.3s ease;
+        }
+        
+        #mobile-menu {
+            transition: transform 0.3s ease;
+        }
+        
+        #mobile-menu.show {
+            transform: translateY(0);
+        }
+        
+        /* Dashboard main content */
+        .dashboard-main {
+            margin-left: 0;
+            transition: margin-left 0.3s ease;
+            width: 100%;
+        }
+        
+        @media (min-width: 1024px) {
+            .dashboard-main {
+                margin-left: 16rem;
+                width: calc(100% - 16rem);
+            }
+        }
+        
+        /* Desktop Sidebar - Hidden on mobile, shown on desktop when logged in */
+        #desktopSidebar {
+            display: none;
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 16rem;
+            background-color: #18181b;
+            border-right: 1px solid #27272a;
+            z-index: 40;
+            flex-direction: column;
+            transform: translateX(0);
+            transition: transform 0.3s ease;
+        }
+        
+        /* Show sidebar only on desktop when logged in */
+        @media (min-width: 1024px) {
+            #desktopSidebar.show-sidebar {
+                display: flex;
+            }
+        }
+        
+        /* Sidebar link hover effect */
+        .sidebar-link {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .sidebar-link::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background-color: #10b981;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .sidebar-link:hover::after,
+        .sidebar-link.active::after {
+            transform: translateX(0);
+        }
+        
+        /* Notification badge */
+        .notification-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 6px;
+            height: 6px;
+            background-color: #ef4444;
+            border-radius: 50%;
+        }
+        
+        /* Ensure content is properly spaced */
+        .main-container {
+            width: 100%;
+            max-width: 100%;
+        }
+        
+        /* Curve Line Animation for Login */
+        .curve-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        .curve-container.active {
+            opacity: 1;
+        }
+        
+        .curve-line {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+        }
+        
+        .curve-circle {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            animation: rotate 20s linear infinite;
+        }
+        
+        .curve-circle:nth-child(1) {
+            border-top-color: #10b981;
+            animation-duration: 15s;
+        }
+        
+        .curve-circle:nth-child(2) {
+            border-right-color: #3b82f6;
+            animation-duration: 20s;
+            animation-direction: reverse;
+        }
+        
+        .curve-circle:nth-child(3) {
+            border-bottom-color: #8b5cf6;
+            animation-duration: 25s;
+        }
+        
+        .year-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3.5rem;
+            font-weight: 900;
+            background: linear-gradient(45deg, #10b981, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            opacity: 0;
+            animation: fadeInText 1s ease-out 0.5s forwards;
+        }
+        
+        @keyframes rotate {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        
+        @keyframes fadeInText {
+            to {
+                opacity: 1;
+            }
+        }
+        
+        .pulse-dot {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #10b981;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.5);
+                opacity: 0.5;
+            }
+        }
+        
+        /* Mobile header adjustments */
+        @media (max-width: 768px) {
+            #authStatus,
+            #paymentStatus,
+            .desktop-only {
+                display: none !important;
+            }
+            
+            .mobile-header {
+                justify-content: space-between;
+            }
+        }
+        
+        /* Enhanced copy button styles */
+        .copy-button-enhanced {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .copy-button-enhanced::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(16, 185, 129, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .copy-button-enhanced:active::before {
+            width: 200px;
+            height: 200px;
+        }
+        
+        /* Login success animation */
+        .login-success-animation {
+            animation: loginSuccess 1.5s ease-out forwards;
+        }
+        
+        @keyframes loginSuccess {
+            0% {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen bg-pageBg">
+    <!-- Curve Line Animation Container -->
+    <div id="curveAnimation" class="curve-container">
+        <div class="curve-line">
+            <div class="curve-circle"></div>
+            <div class="curve-circle"></div>
+            <div class="curve-circle"></div>
+            <div class="pulse-dot"></div>
+           
+        </div>
+    </div>
+
+    <!-- Sticky Navigation -->
+    <nav id="sticky-nav" class="fixed top-0 left-0 right-0 bg-black/95 border-b border-zinc-800 z-50 sticky-nav">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3 mobile-header">
+                <div class="lg:hidden">
+                    <button id="mobile-menu-toggle" class="text-white p-2 hover:bg-zinc-800 rounded-lg transition">
+                        <i class="fas fa-bars text-lg"></i>
+                    </button>
+                </div>
+                <div class="flex items-center gap-3">
+                    <img src="LOGO.png" class="h-8 w-8" alt="lessonfuse">
+                    <span class="text-white font-medium text-sm">Thauleem</span>
+                    <div id="authStatus" class="auth-status logged-out hidden desktop-only">
+                        <i class="fas fa-user mr-1"></i> Not Signed In
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <div id="paymentStatus" class="px-3 py-1 bg-amber-900/30 border border-amber-800 rounded text-xs text-amber-300 hidden desktop-only">
+                    <i class="fas fa-exclamation-triangle mr-1"></i> Payment Required
+                </div>
+                <button id="authButton" 
+                   class="px-4 py-2 border border-zinc-800 hover:border-zinc-700 text-white rounded transition text-sm font-medium">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Login
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu-overlay"
+         class="fixed inset-0 bg-black/60 z-50 hidden lg:hidden"
+         onclick="toggleMobileMenu()">
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu"
+         class="fixed inset-x-0 bottom-0 bg-cardBg rounded-t-2xl z-50 transform translate-y-full transition-transform duration-300 lg:hidden"
+         style="max-height: 80vh;">
+        <div class="flex flex-col h-full">
+            <div class="flex justify-center py-3 border-b border-borderClr">
+                <div class="w-12 h-1 bg-zinc-600 rounded-full"></div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto px-4 py-4">
+                <!-- User info section -->
+                <div id="mobileUserInfo" class="mb-6 p-3 bg-zinc-900/50 rounded-lg hidden">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-emerald-900/30 flex items-center justify-center">
+                            <i class="fas fa-user text-emerald-500"></i>
+                        </div>
+                        <div>
+                            <p class="text-white font-medium text-sm" id="mobileUserName"></p>
+                            <p class="text-zinc-400 text-xs" id="mobileUserEmail"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Menu sections will be populated dynamically -->
+                <div id="mobileMenuContent"></div>
+                
+                <!-- Logout button -->
+                <button id="mobileLogoutBtn" 
+                        class="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-softText/70 hover:text-red-500 hover:bg-red-600/10 transition-all hidden">
+                    <i class="fas fa-sign-out-alt text-base text-red-600"></i>
+                    <span class="text-sm">Logout</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Desktop Sidebar (Hidden by default, shown after login on desktop only) -->
+    <aside id="desktopSidebar" class="fixed left-0 top-0 h-full w-64 bg-cardBg border-r border-borderClr z-40 flex-col hidden lg:flex">
+        <div class="flex items-center justify-between px-4 py-5 border-b border-borderClr">
+            <a href="#" class="flex items-center gap-2">
+                <img src="LOGO.png"size-8 flex items-center justify-center" alt="Lessonfuse"/>
+                <span class="text-white font-medium">Thauleem</span>
+            </a>
+        </div>
+
+        <!-- User info section -->
+        <div id="desktopUserInfo" class="px-4 py-4 border-b border-borderClr hidden">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-emerald-900/30 flex items-center justify-center">
+                    <i class="fas fa-user text-emerald-500"></i>
+                </div>
+                <div>
+                    <p class="text-white font-medium text-sm" id="desktopUserName"></p>
+                    <p class="text-zinc-400 text-xs" id="desktopUserEmail"></p>
+                </div>
+            </div>
+        </div>
+
+        <nav id="sidebarNav" class="flex-1 px-3 py-4 space-y-6 overflow-y-auto">
+            <!-- Navigation will be populated dynamically -->
+        </nav>
+
+        <div class="px-3 py-4 border-t border-borderClr space-y-1">
+            <a href="#"
+               class="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-softText/70 hover:text-softText hover:bg-pageBg transition-all">
+                <i class="fas fa-user-circle text-sm text-softText/60 group-hover:text-emerald-500 transition-colors"></i>
+                <span class="text-sm">My Account</span>
+            </a>
+
+            <button id="desktopLogoutBtn"
+                    class="w-full group flex items-center gap-3 px-3 py-2.5 rounded-lg text-softText/70 hover:text-red-500 hover:bg-red-600/10 transition-all hidden">
+                <i class="fas fa-sign-out-alt text-sm text-red-600 group-hover:text-red-500 transition-colors"></i>
+                <span class="text-sm">Logout</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="auth-modal">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-xl w-full max-w-md mx-4 modal-enter">
+            <div class="p-6">
+                <!-- Tabs -->
+                <div class="flex border-b border-zinc-800 mb-6">
+                    <button id="loginTab" class="auth-tab active" data-tab="login">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Login
+                    </button>
+                    <button id="signupTab" class="auth-tab" data-tab="signup">
+                        <i class="fas fa-user-plus mr-2"></i>Sign Up
+                    </button>
+                    <button id="closeModal" class="ml-auto text-zinc-500 hover:text-white">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <!-- Login Form -->
+                <form id="loginForm" class="space-y-4">
+                    <div>
+                        <label for="loginEmail" class="block text-sm font-medium text-white mb-2">
+                            <i class="fas fa-envelope text-emerald-500 mr-2"></i>
+                            Email Address
+                        </label>
+                        <input 
+                            type="email" 
+                            id="loginEmail" 
+                            required
+                            placeholder="teacher@school.edu"
+                            class="w-full px-4 py-3 rounded-lg form-input"
+                        >
+                    </div>
+                    
+                    <div>
+                        <label for="loginPassword" class="block text-sm font-medium text-white mb-2">
+                            <i class="fas fa-lock text-emerald-500 mr-2"></i>
+                            Password
+                        </label>
+                        <input 
+                            type="password" 
+                            id="loginPassword" 
+                            required
+                            placeholder="••••••••"
+                            class="w-full px-4 py-3 rounded-lg form-input"
+                        >
+                    </div>
+                    
+                    <button 
+                        type="submit"
+                        id="loginBtn"
+                        class="w-full px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition font-medium flex items-center justify-center gap-2"
+                    >
+                        <i class="fas fa-sign-in-alt"></i>
+                        Sign In to Thauleem
+                    </button>
+                    
+                    <div class="text-center">
+                        <button type="button" id="switchToSignup" class="text-sm text-zinc-400 hover:text-emerald-500 transition">
+                            Don't have an account? Sign up here
+                        </button>
+                    </div>
+                    
+                    <div id="loginError" class="hidden p-3 bg-red-900/30 border border-red-800 rounded-lg">
+                        <p class="text-sm text-red-300"></p>
+                    </div>
+                </form>
+                
+                <!-- Signup Form -->
+                <form id="signupForm" class="space-y-4 hidden">
+                    <div>
+                        <label for="signupName" class="block text-sm font-medium text-white mb-2">
+                            <i class="fas fa-user text-emerald-500 mr-2"></i>
+                            Full Name
+                        </label>
+                        <input 
+                            type="text" 
+                            id="signupName" 
+                            required
+                            placeholder="John Doe"
+                            class="w-full px-4 py-3 rounded-lg form-input"
+                        >
+                    </div>
+                    
+                    <div>
+                        <label for="signupEmail" class="block text-sm font-medium text-white mb-2">
+                            <i class="fas fa-envelope text-emerald-500 mr-2"></i>
+                            Email Address
+                        </label>
+                        <input 
+                            type="email" 
+                            id="signupEmail" 
+                            required
+                            placeholder="teacher@school.edu"
+                            class="w-full px-4 py-3 rounded-lg form-input"
+                        >
+                    </div>
+                    
+                    <div>
+                        <label for="signupPhone" class="block text-sm font-medium text-white mb-2">
+                            <i class="fas fa-phone text-emerald-500 mr-2"></i>
+                            Phone Number
+                        </label>
+                        <input 
+                            type="tel" 
+                            id="signupPhone" 
+                            required
+                            placeholder="9123456"
+                            class="w-full px-4 py-3 rounded-lg form-input"
+                        >
+                    </div>
+                    
+                    <div>
+                        <label for="signupPassword" class="block text-sm font-medium text-white mb-2">
+                            <i class="fas fa-lock text-emerald-500 mr-2"></i>
+                            Password (min. 6 characters)
+                        </label>
+                        <input 
+                            type="password" 
+                            id="signupPassword" 
+                            required
+                            minlength="6"
+                            placeholder="••••••••"
+                            class="w-full px-4 py-3 rounded-lg form-input"
+                        >
+                    </div>
+                    
+                    <div>
+                        <label for="confirmPassword" class="block text-sm font-medium text-white mb-2">
+                            <i class="fas fa-lock text-emerald-500 mr-2"></i>
+                            Confirm Password
+                        </label>
+                        <input 
+                            type="password" 
+                            id="confirmPassword" 
+                            required
+                            placeholder="••••••••"
+                            class="w-full px-4 py-3 rounded-lg form-input"
+                        >
+                    </div>
+                    
+                    <button 
+                        type="submit"
+                        id="signupBtn"
+                        class="w-full px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition font-medium flex items-center justify-center gap-2"
+                    >
+                        <i class="fas fa-user-plus"></i>
+                        Create Account
+                    </button>
+                    
+                    <div class="text-center">
+                        <button type="button" id="switchToLogin" class="text-sm text-zinc-400 hover:text-emerald-500 transition">
+                            Already have an account? Login here
+                        </button>
+                    </div>
+                    
+                    <div id="signupError" class="hidden p-3 bg-red-900/30 border border-red-800 rounded-lg">
+                        <p class="text-sm text-red-300"></p>
+                    </div>
+                </form>
+                
+                <!-- Loading State -->
+                <div id="authLoading" class="hidden flex items-center justify-center gap-3 py-4">
+                    <div class="loading-spinner"></div>
+                    <span class="text-sm text-zinc-400">Processing...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div id="mainContent" class="dashboard-main flex-grow pt-16">
+        <!-- Landing Section (Visible before login) -->
+        <section id="landingSection" class="flex-grow flex items-center justify-center py-16 px-4 sm:px-6">
+            <div class="max-w-2xl mx-auto text-center fade-in">
+                <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-emerald-900/30 border border-emerald-800 mb-6">
+                    <i class="fas fa-chalkboard-teacher text-emerald-500 text-4xl"></i>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">
+                    Welcome to <span class="welcome-message">Thauleem</span>
+                </h1>
+                <p class="text-zinc-400 text-lg mb-8 max-w-lg mx-auto">
+                    Complete lesson planning platform for Maldivian teachers
+                </p>
+                <button id="getStartedBtn" 
+                        class="px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition font-medium text-lg flex items-center justify-center gap-3 mx-auto">
+                    <i class="fas fa-rocket"></i>
+                    Get Started - Complete Payment
+                </button>
+                
+                <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6">
+                        <div class="w-12 h-12 rounded-full bg-emerald-900/30 flex items-center justify-center mb-4 mx-auto">
+                            <i class="fas fa-bolt text-emerald-500 text-xl"></i>
+                        </div>
+                        <h3 class="text-white font-medium mb-2">Quick Setup</h3>
+                        <p class="text-zinc-400 text-sm">Easy registration and payment process</p>
+                    </div>
+                    <div class="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6">
+                        <div class="w-12 h-12 rounded-full bg-emerald-900/30 flex items-center justify-center mb-4 mx-auto">
+                            <i class="fas fa-shield-alt text-emerald-500 text-xl"></i>
+                        </div>
+                        <h3 class="text-white font-medium mb-2">Secure Payment</h3>
+                        <p class="text-zinc-400 text-sm">Bank transfer with receipt verification</p>
+                    </div>
+                    <div class="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6">
+                        <div class="w-12 h-12 rounded-full bg-emerald-900/30 flex items-center justify-center mb-4 mx-auto">
+                            <i class="fas fa-infinity text-emerald-500 text-xl"></i>
+                        </div>
+                        <h3 class="text-white font-medium mb-2">Unlimited Access</h3>
+                        <p class="text-zinc-400 text-sm">Full features after payment verification</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Payment Section (Visible after login) -->
+        <section id="paymentSection" class="payment-content flex-grow flex items-center justify-center py-16 px-4 sm:px-6">
+            <div class="max-w-4xl mx-auto w-full fade-in">
+                <!-- Welcome Message -->
+                <div id="welcomeMessage" class="text-center mb-10 hidden">
+                    <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-900/30 border border-emerald-800 mb-4">
+                        <i class="fas fa-user-check text-emerald-500 text-3xl"></i>
+                    </div>
+                    <h1 class="text-3xl md:text-4xl font-bold text-white mb-3">
+                        Welcome, <span id="userName" class="welcome-message"></span>!
+                    </h1>
+                    <p class="text-zinc-400 text-lg max-w-2xl mx-auto">
+                        Complete your payment to unlock full access to Lessonfuse
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Left Column: Payment Form -->
+                    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6 md:p-8">
+                        <h2 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
+                            <i class="fas fa-credit-card text-emerald-500"></i>
+                            Complete Your Payment
+                        </h2>
+                        <p class="text-zinc-400 text-sm mb-6">
+                            Pay via bank transfer and upload your receipt
+                        </p>
+
+                        <form id="paymentForm" class="space-y-6">
+                            <!-- Payment Method -->
+                            <div>
+                                <h3 class="text-lg font-medium text-white mb-4">
+                                    <i class="fas fa-university mr-2 text-emerald-500"></i>
+                                    Pay via Bank Transfer (MVR)
+                                </h3>
+                                
+                                <!-- Amount Box -->
+                                <div class="bg-black border-2 border-emerald-500/30 rounded-lg p-4 mb-6">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <p class="text-sm text-zinc-400">Amount to transfer</p>
+                                            <p class="text-2xl font-bold text-white">150 MVR</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-sm text-zinc-400">Yearly Subscription</p>
+                                            <p class="text-sm text-emerald-500">Unlimited generations</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Account Details -->
+                                <div class="space-y-4">
+                                    <h4 class="text-white font-medium">Account Details</h4>
+                                    
+                                    <!-- Bank Account -->
+                                    <div class="bg-black border border-zinc-800 rounded-lg p-4">
+                                        <p class="text-sm text-zinc-400 mb-2">BML Account Number</p>
+                                        <div class="flex items-center justify-between">
+                                            <p class="text-lg font-mono text-white" id="accountNumber">1234567890</p>
+                                            <button 
+                                                type="button"
+                                                onclick="copyToClipboard('accountNumber')"
+                                                class="copy-button copy-button-enhanced px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded text-sm text-white transition flex items-center gap-2"
+                                                id="copyAccountBtn"
+                                            >
+                                                <i class="fas fa-copy"></i>
+                                                Copy
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Account Name -->
+                                    <div class="bg-black border border-zinc-800 rounded-lg p-4">
+                                        <p class="text-sm text-zinc-400 mb-2">Account Name</p>
+                                        <div class="flex items-center justify-between">
+                                            <p class="text-lg font-medium text-white" id="accountName">Thauleem</p>
+                                            <button 
+                                                type="button"
+                                                onclick="copyToClipboard('accountName')"
+                                                class="copy-button copy-button-enhanced px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded text-sm text-white transition flex items-center gap-2"
+                                                id="copyNameBtn"
+                                            >
+                                                <i class="fas fa-copy"></i>
+                                                Copy
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Contact Number -->
+                            <div>
+                                <label for="contactNumber" class="block text-sm font-medium text-white mb-2">
+                                    <i class="fas fa-phone text-emerald-500 mr-2"></i>
+                                    Contact Number
+                                </label>
+                                <input 
+                                    type="tel" 
+                                    id="contactNumber" 
+                                    name="contactNumber"
+                                    required
+                                    placeholder="9123456"
+                                    class="w-full px-4 py-3 rounded-lg form-input"
+                                >
+                                <p class="mt-1 text-xs text-zinc-500">
+                                    We'll use this to contact you about your payment.
+                                </p>
+                            </div>
+
+                            <!-- Transfer Receipt Upload -->
+                            <div>
+                                <label class="block text-sm font-medium text-white mb-2">
+                                    <i class="fas fa-receipt text-emerald-500 mr-2"></i>
+                                    Transfer Receipt Upload
+                                </label>
+                                <div class="mt-1">
+                                    <label for="receiptFile" class="file-upload-label flex flex-col items-center justify-center w-full h-32 border-2 border-zinc-800 border-dashed rounded-lg cursor-pointer hover:border-zinc-700 transition">
+                                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                            <i class="fas fa-cloud-upload-alt text-3xl text-zinc-600 mb-2"></i>
+                                            <p class="text-sm text-zinc-400 mb-1">
+                                                <span class="font-medium">Click to upload</span> or drag and drop
+                                            </p>
+                                            <p class="text-xs text-zinc-500">
+                                                PNG, JPG up to 10MB
+                                            </p>
+                                        </div>
+                                        <input 
+                                            id="receiptFile" 
+                                            name="receiptFile"
+                                            type="file" 
+                                            class="file-upload-input" 
+                                            accept=".png,.jpg,.jpeg"
+                                            required
+                                        >
+                                    </label>
+                                    <div id="fileName" class="mt-2 text-sm text-zinc-400 hidden">
+                                        <i class="fas fa-file-image mr-2"></i>
+                                        <span id="fileText"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <button 
+                                type="submit"
+                                id="submitPaymentBtn"
+                                class="w-full px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition font-medium text-lg flex items-center justify-center gap-2"
+                            >
+                                <i class="fas fa-paper-plane"></i>
+                                Submit Payment Details
+                            </button>
+
+                            <!-- Loading Indicator -->
+                            <div id="loadingIndicator" class="hidden flex items-center justify-center gap-3 py-4">
+                                <div class="loading-spinner"></div>
+                                <span class="text-sm text-zinc-400">Processing your payment...</span>
+                            </div>
+
+                            <!-- Success Message -->
+                            <div id="successMessage" class="hidden p-4 bg-emerald-900/30 border border-emerald-800 rounded-lg">
+                                <p class="text-sm text-emerald-300 flex items-center gap-2">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Payment details submitted successfully! We'll verify and activate your account within 24 hours.</span>
+                                </p>
+                            </div>
+
+                            <!-- Error Message -->
+                            <div id="errorMessage" class="hidden p-4 bg-red-900/30 border border-red-800 rounded-lg">
+                                <p class="text-sm text-red-300 flex items-center gap-2">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    <span id="errorText">Please fill all required fields and upload receipt.</span>
+                                </p>
+                            </div>
+                        </form>
+
+                        <!-- Assistance Section -->
+                        <div class="mt-8 pt-6 border-t border-zinc-800">
+                            <h4 class="text-white font-medium mb-3 flex items-center gap-2">
+                                <i class="fas fa-life-ring text-amber-500"></i>
+                                Need Assistance?
+                            </h4>
+                            <p class="text-sm text-zinc-400 mb-4">
+                                Contact us at <strong class="text-white">9131220</strong> on Telegram or Viber for immediate support with your subscription.
+                            </p>
+                            <div class="flex flex-wrap gap-3">
+                                <a href="#" 
+                                   class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition text-sm text-white flex items-center gap-2">
+                                    <i class="fab fa-telegram"></i>
+                                    Telegram Support
+                                </a>
+                                <a href="viber://chat?number=9609131220"
+                                   class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition text-sm text-white flex items-center gap-2">
+                                    <i class="fab fa-viber"></i>
+                                    Viber Support
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Features & Instructions -->
+                    <div class="space-y-6">
+                        <!-- What Happens Next -->
+                        <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+                            <h3 class="text-white font-bold text-lg mb-4 flex items-center gap-2">
+                                <i class="fas fa-clock text-emerald-500"></i>
+                                What Happens Next?
+                            </h3>
+                            <ol class="space-y-4">
+                                <li class="flex items-start gap-3">
+                                    <div class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-900/30 border border-emerald-800 flex items-center justify-center">
+                                        <span class="text-xs text-emerald-500 font-bold">1</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-white text-sm font-medium">Transfer MVR 150 to our BML Account</p>
+                                        <p class="text-zinc-400 text-xs mt-1">Use the account details provided</p>
+                                    </div>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <div class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-900/30 border border-emerald-800 flex items-center justify-center">
+                                        <span class="text-xs text-emerald-500 font-bold">2</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-white text-sm font-medium">Take a Screenshot/Photo of Receipt</p>
+                                        <p class="text-zinc-400 text-xs mt-1">Make sure transaction ID is visible</p>
+                                    </div>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <div class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-900/30 border border-emerald-800 flex items-center justify-center">
+                                        <span class="text-xs text-emerald-500 font-bold">3</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-white text-sm font-medium">Upload Receipt & Submit</p>
+                                        <p class="text-zinc-400 text-xs mt-1">We'll verify within 24 hours</p>
+                                    </div>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <div class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-900/30 border border-emerald-800 flex items-center justify-center">
+                                        <span class="text-xs text-emerald-500 font-bold">4</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-white text-sm font-medium">Get Full Access Immediately</p>
+                                        <p class="text-zinc-400 text-xs mt-1">Start using all Lessonfuse features</p>
+                                    </div>
+                                </li>
+                            </ol>
+                        </div>
+
+                        <!-- Features Unlocked -->
+                        <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+                            <h3 class="text-white font-bold text-lg mb-4 flex items-center gap-2">
+                                <i class="fas fa-lock-open text-emerald-500"></i>
+                                Features You'll Unlock
+                            </h3>
+                            <ul class="space-y-3">
+                                <li class="flex items-start gap-3">
+                                    <i class="fas fa-check-circle text-emerald-500 mt-1"></i>
+                                    <span class="text-zinc-300 text-sm">Complete lesson planning with AutoSchemes</span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <i class="fas fa-check-circle text-emerald-500 mt-1"></i>
+                                    <span class="text-zinc-300 text-sm">Digitized Maldivian curriculum</span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <i class="fas fa-check-circle text-emerald-500 mt-1"></i>
+                                    <span class="text-zinc-300 text-sm">Unlimited lesson generations</span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <i class="fas fa-check-circle text-emerald-500 mt-1"></i>
+                                    <span class="text-zinc-300 text-sm">Exam and assessment generators</span>
+                                </li>
+                                <li class="flex items-start gap-3">
+                                    <i class="fas fa-check-circle text-emerald-500 mt-1"></i>
+                                    <span class="text-zinc-300 text-sm">Priority support</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Payment Reminder -->
+                        <div class="bg-amber-900/20 border border-amber-800 rounded-xl p-6">
+                            <h4 class="text-amber-300 font-medium mb-3 flex items-center gap-2">
+                                <i class="fas fa-exclamation-circle"></i>
+                                Important Notes
+                            </h4>
+                            <ul class="space-y-2 text-sm text-amber-200/80">
+                                <li class="flex items-start gap-2">
+                                    <i class="fas fa-circle text-xs mt-1"></i>
+                                    <span>Only transfer <strong>MVR 150</strong> to the account above</span>
+                                </li>
+                                <li class="flex items-center gap-2">
+                                    <i class="fas fa-circle text-xs"></i>
+                                    <span>Include your name in transfer reference if possible</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <i class="fas fa-circle text-xs mt-1"></i>
+                                    <span>Keep your receipt until account is activated</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <i class="fas fa-circle text-xs mt-1"></i>
+                                    <span>Contact support if verification takes over 24 hours</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Support Info -->
+                        <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-10 h-10 rounded-full bg-emerald-900/30 flex items-center justify-center">
+                                    <i class="fas fa-headset text-emerald-500"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-white font-medium">Quick Support</h4>
+                                    <p class="text-xs text-zinc-500">Available 9AM - 5PM, Saturday - Thursday</p>
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                <a href="tel:9131220" 
+                                   class="flex items-center gap-3 p-3 border border-zinc-800 hover:border-zinc-700 rounded-lg transition">
+                                    <i class="fas fa-phone text-emerald-500"></i>
+                                    <div>
+                                        <p class="text-sm text-white">Call Support</p>
+                                        <p class="text-xs text-zinc-500">9131220</p>
+                                    </div>
+                                </a>
+                                <a href="#" 
+                                   class="flex items-center gap-3 p-3 border border-zinc-800 hover:border-zinc-700 rounded-lg transition">
+                                    <i class="fab fa-telegram text-blue-500"></i>
+                                    <div>
+                                        <p class="text-sm text-white">Telegram Channel</p>
+                                        <p class="text-xs text-zinc-500">@thauleem</p>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard Content (Visible after payment) -->
+        <section id="dashboardSection" class="hidden">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+                <!-- Dashboard Header -->
+                <div class="mb-8">
+                    <h1 class="text-3xl font-bold text-white mb-2">Dashboard</h1>
+                    <p class="text-zinc-400">Welcome to your Lessonfuse workspace</p>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 rounded-lg bg-emerald-900/30 flex items-center justify-center">
+                                <i class="fas fa-folder text-emerald-500 text-xl"></i>
+                            </div>
+                            <span class="text-2xl font-bold text-white">0</span>
+                        </div>
+                        <h3 class="text-white font-medium mb-1">My Schemes</h3>
+                        <p class="text-zinc-400 text-sm">Lesson plans created</p>
+                    </div>
+                    
+                    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 rounded-lg bg-blue-900/30 flex items-center justify-center">
+                                <i class="fas fa-book text-blue-500 text-xl"></i>
+                            </div>
+                            <span class="text-2xl font-bold text-white">0</span>
+                        </div>
+                        <h3 class="text-white font-medium mb-1">Classes</h3>
+                        <p class="text-zinc-400 text-sm">Active classes</p>
+                    </div>
+                    
+                    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 rounded-lg bg-purple-900/30 flex items-center justify-center">
+                                <i class="fas fa-file-alt text-purple-500 text-xl"></i>
+                            </div>
+                            <span class="text-2xl font-bold text-white">0</span>
+                        </div>
+                        <h3 class="text-white font-medium mb-1">Exams</h3>
+                        <p class="text-zinc-400 text-sm">Assessments created</p>
+                    </div>
+                    
+                    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 rounded-lg bg-amber-900/30 flex items-center justify-center">
+                                <i class="fas fa-list text-amber-500 text-xl"></i>
+                            </div>
+                            <span class="text-2xl font-bold text-white">0</span>
+                        </div>
+                        <h3 class="text-white font-medium mb-1">Checklists</h3>
+                        <p class="text-zinc-400 text-sm">Task lists completed</p>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+                        <h3 class="text-white font-bold text-lg mb-4 flex items-center gap-2">
+                            <i class="fas fa-bolt text-emerald-500"></i>
+                            Quick Actions
+                        </h3>
+                        <div class="space-y-3">
+                            <button class="w-full text-left flex items-center gap-3 p-3 border border-zinc-800 hover:border-emerald-800 hover:bg-emerald-900/10 rounded-lg transition">
+                                <i class="fas fa-plus-circle text-emerald-500"></i>
+                                <span class="text-white text-sm">Create New Scheme</span>
+                            </button>
+                            <button class="w-full text-left flex items-center gap-3 p-3 border border-zinc-800 hover:border-blue-800 hover:bg-blue-900/10 rounded-lg transition">
+                                <i class="fas fa-calendar-plus text-blue-500"></i>
+                                <span class="text-white text-sm">Schedule Class</span>
+                            </button>
+                            <button class="w-full text-left flex items-center gap-3 p-3 border border-zinc-800 hover:border-purple-800 hover:bg-purple-900/10 rounded-lg transition">
+                                <i class="fas fa-file-import text-purple-500"></i>
+                                <span class="text-white text-sm">Generate Exam</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6 lg:col-span-2">
+                        <h3 class="text-white font-bold text-lg mb-4 flex items-center gap-2">
+                            <i class="fas fa-history text-amber-500"></i>
+                            Recent Activity
+                        </h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between p-3 border border-zinc-800 rounded-lg">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center">
+                                        <i class="fas fa-info-circle text-zinc-400"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-white text-sm">No recent activity</p>
+                                        <p class="text-zinc-500 text-xs">Complete your first lesson plan to see activity here</p>
+                                    </div>
+                                </div>
+                                <span class="text-zinc-500 text-xs">Just now</span>
+                            </div>
+                            <div class="text-center py-4">
+                                <p class="text-zinc-400 text-sm">Start by creating your first lesson scheme</p>
+                                <button class="mt-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition text-sm">
+                                    Get Started
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Getting Started -->
+                <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+                    <h3 class="text-white font-bold text-lg mb-6 flex items-center gap-2">
+                        <i class="fas fa-graduation-cap text-emerald-500"></i>
+                        Getting Started with Lessonfuse
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <a href="#" class="group p-4 border border-zinc-800 hover:border-emerald-800 rounded-lg transition">
+                            <div class="w-10 h-10 rounded-lg bg-emerald-900/30 flex items-center justify-center mb-3">
+                                <i class="fas fa-folder text-emerald-500"></i>
+                            </div>
+                            <h4 class="text-white font-medium mb-1 group-hover:text-emerald-400">Create Scheme</h4>
+                            <p class="text-zinc-400 text-xs">Start your first lesson plan</p>
+                        </a>
+                        
+                        <a href="#" class="group p-4 border border-zinc-800 hover:border-blue-800 rounded-lg transition">
+                            <div class="w-10 h-10 rounded-lg bg-blue-900/30 flex items-center justify-center mb-3">
+                                <i class="fas fa-book text-blue-500"></i>
+                            </div>
+                            <h4 class="text-white font-medium mb-1 group-hover:text-blue-400">Set Up Classes</h4>
+                            <p class="text-zinc-400 text-xs">Add your teaching classes</p>
+                        </a>
+                        
+                        <a href="#" class="group p-4 border border-zinc-800 hover:border-purple-800 rounded-lg transition">
+                            <div class="w-10 h-10 rounded-lg bg-purple-900/30 flex items-center justify-center mb-3">
+                                <i class="fas fa-file-alt text-purple-500"></i>
+                            </div>
+                            <h4 class="text-white font-medium mb-1 group-hover:text-purple-400">Generate Exam</h4>
+                            <p class="text-zinc-400 text-xs">Create assessments</p>
+                        </a>
+                        
+                        <a href="#" class="group p-4 border border-zinc-800 hover:border-amber-800 rounded-lg transition">
+                            <div class="w-10 h-10 rounded-lg bg-amber-900/30 flex items-center justify-center mb-3">
+                                <i class="fas fa-list text-amber-500"></i>
+                            </div>
+                            <h4 class="text-white font-medium mb-1 group-hover:text-amber-400">Checklists</h4>
+                            <p class="text-zinc-400 text-xs">Track your tasks</p>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="relative bg-black py-12 border-t border-zinc-800">
+        <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-zinc-700 to-transparent"></div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6">
+            <div class="flex flex-col items-center gap-6">
+                <div class="flex items-center gap-3">
+                    <img src="https://s.lessonfuse.com/landing/logo.png" class="h-6 w-6" alt="lessonfuse">
+                    <span class="text-zinc-600 font-light tracking-wide">Made in Maldives by</span>
+                </div>
+                <div class="flex items-center gap-4 text-sm">
+                    <div class="flex items-center gap-4 flex-wrap justify-center">
+                        <a href="#" 
+                           class="group flex items-center gap-2 px-3 py-1.5 rounded-md border border-zinc-800/50 hover:border-zinc-700 transition-all duration-300">
+                            <i class="fas fa-chalkboard-teacher text-zinc-600 group-hover:text-emerald-500 transition-colors duration-300 text-xs"></i>
+                            <span class="text-zinc-400 group-hover:text-zinc-200 transition-colors duration-200 font-medium">Ahmed Vaseem</span>
+                        </a>
+                        <span class="text-zinc-800 font-light">Developer</span>
+                        <a href="#" 
+                           class="group flex items-center gap-2 px-3 py-1.5 rounded-md border border-zinc-800/50 hover:border-zinc-700 transition-all duration-300">
+                            <i class="fas fa-code text-zinc-600 group-hover:text-emerald-500 transition-colors duration-300 text-xs"></i>
+                            <span class="text-zinc-400 group-hover:text-zinc-200 transition-colors duration-200 font-medium">symcodermv</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="text-xs text-zinc-700 text-center max-w-md">
+                    © 2024 Thauleem. Built exclusively for Maldivian teachers. MVR 150/year • Unlimited generations with fair usage limits.
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Firebase Configuration and Authentication Script -->
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAWZhhfPQYjYWgRizSlC8CgXmw7p-etF_k",
+            authDomain: "testfile-d4e33.firebaseapp.com",
+            databaseURL: "https://testfile-d4e33-default-rtdb.firebaseio.com",
+            projectId: "testfile-d4e33",
+            storageBucket: "testfile-d4e33.firebasestorage.app",
+            messagingSenderId: "506950055235",
+            appId: "1:506950055235:web:3b4777aa5f63771ad0ebf6",
+            measurementId: "G-HYRNNJ4YRQ"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        // DOM Elements
+        const authModal = document.getElementById('authModal');
+        const authButton = document.getElementById('authButton');
+        const authStatus = document.getElementById('authStatus');
+        const paymentStatus = document.getElementById('paymentStatus');
+        const landingSection = document.getElementById('landingSection');
+        const paymentSection = document.getElementById('paymentSection');
+        const dashboardSection = document.getElementById('dashboardSection');
+        const welcomeMessage = document.getElementById('welcomeMessage');
+        const userName = document.getElementById('userName');
+        const getStartedBtn = document.getElementById('getStartedBtn');
+        const closeModal = document.getElementById('closeModal');
+        const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+        const desktopSidebar = document.getElementById('desktopSidebar');
+        const mainContent = document.getElementById('mainContent');
+        const curveAnimation = document.getElementById('curveAnimation');
+        
+        // Auth modal elements
+        const loginTab = document.getElementById('loginTab');
+        const signupTab = document.getElementById('signupTab');
+        const loginForm = document.getElementById('loginForm');
+        const signupForm = document.getElementById('signupForm');
+        const switchToSignup = document.getElementById('switchToSignup');
+        const switchToLogin = document.getElementById('switchToLogin');
+
+        // Navigation data
+        const navigationData = {
+            planning: {
+                title: "Planning",
+                items: [
+                    { icon: "fa-folder", text: "My Schemes", href: "/scheme/" },
+                    { icon: "fa-wand-magic-sparkles", text: "Prompts", href: "/plan/prompts/" },
+                    { icon: "fa-file-code", text: "Templates", href: "/templates/" }
+                ]
+            },
+            classes: {
+                title: "Classes",
+                items: [
+                    { icon: "fa-book", text: "Class Schedule", href: "/autoscheme/classes/" },
+                    { icon: "fa-users", text: "Manage Classes", href: "/autoscheme/classes/manage/" },
+                    { icon: "fa-calendar-alt", text: "Timetable", href: "/autoscheme/classes/timetable/calendar/" },
+                    { icon: "fa-user-graduate", text: "Students", href: "/autoscheme/students/" }
+                ]
+            },
+            resources: {
+                title: "Resources",
+                items: [
+                    { icon: "fa-list", text: "Checklists", href: "/checklist/" },
+                    { icon: "fa-file-alt", text: "Exams", href: "/exams/" },
+                    { icon: "fa-file-powerpoint", text: "Presentations", href: "/presentation/" },
+                    { icon: "fa-headphones", text: "Listening", href: "/listening/" }
+                ]
+            }
+        };
+
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show landing page initially
+            showLandingPage();
+            
+            // Get Started button shows auth modal
+            getStartedBtn.addEventListener('click', () => {
+                showAuthModal('login');
+            });
+            
+            // Auth button in nav shows auth modal
+            authButton.addEventListener('click', () => {
+                const user = auth.currentUser;
+                if (user) {
+                    // User is logged in, show logout confirmation
+                    if (confirm('Are you sure you want to logout?')) {
+                        auth.signOut();
+                    }
+                } else {
+                    showAuthModal('login');
+                }
+            });
+            
+            // Close modal button
+            closeModal.addEventListener('click', hideAuthModal);
+            
+            // Switch between login/signup tabs
+            loginTab.addEventListener('click', () => switchAuthTab('login'));
+            signupTab.addEventListener('click', () => switchAuthTab('signup'));
+            switchToSignup.addEventListener('click', () => switchAuthTab('signup'));
+            switchToLogin.addEventListener('click', () => switchAuthTab('login'));
+            
+            // Auth form submissions
+            loginForm.addEventListener('submit', handleLogin);
+            signupForm.addEventListener('submit', handleSignup);
+            
+            // Close modal on outside click
+            authModal.addEventListener('click', (e) => {
+                if (e.target === authModal) {
+                    hideAuthModal();
+                }
+            });
+            
+            // Initialize file upload display
+            document.getElementById('receiptFile').addEventListener('change', handleFileUpload);
+            
+            // Mobile menu toggle
+            mobileMenuToggle.addEventListener('click', toggleMobileMenu);
+            
+            // Mobile logout button
+            document.getElementById('mobileLogoutBtn').addEventListener('click', () => {
+                if (confirm('Are you sure you want to logout?')) {
+                    auth.signOut();
+                    toggleMobileMenu();
+                }
+            });
+            
+            // Desktop logout button
+            document.getElementById('desktopLogoutBtn').addEventListener('click', () => {
+                if (confirm('Are you sure you want to logout?')) {
+                    auth.signOut();
+                }
+            });
+        });
+
+        // Mobile menu functions
+        function toggleMobileMenu() {
+            const isVisible = mobileMenu.classList.contains('show');
+            if (isVisible) {
+                mobileMenu.classList.remove('show');
+                mobileMenuOverlay.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            } else {
+                mobileMenu.classList.add('show');
+                mobileMenuOverlay.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        // Render navigation menus
+        function renderNavigationMenus() {
+            // Render mobile menu
+            const mobileMenuContent = document.getElementById('mobileMenuContent');
+            mobileMenuContent.innerHTML = '';
+            
+            for (const section in navigationData) {
+                const sectionData = navigationData[section];
+                
+                const sectionDiv = document.createElement('div');
+                sectionDiv.className = 'mb-6';
+                
+                sectionDiv.innerHTML = `
+                    <div class="text-xs uppercase tracking-wider font-bold text-emerald-500 mb-3 px-2">
+                        ${sectionData.title}
+                    </div>
+                    <div class="space-y-1">
+                        ${sectionData.items.map(item => `
+                            <a href="${item.href}"
+                               onclick="toggleMobileMenu()"
+                               class="flex items-center gap-3 px-3 py-3 rounded-lg text-softText/70 hover:text-softText hover:bg-pageBg transition-all">
+                                <i class="fas ${item.icon} text-base text-softText/60"></i>
+                                <span class="text-sm">${item.text}</span>
+                            </a>
+                        `).join('')}
+                    </div>
+                `;
+                
+                mobileMenuContent.appendChild(sectionDiv);
+            }
+            
+            // Render desktop sidebar
+            const sidebarNav = document.getElementById('sidebarNav');
+            sidebarNav.innerHTML = '';
+            
+            for (const section in navigationData) {
+                const sectionData = navigationData[section];
+                
+                const sectionDiv = document.createElement('div');
+                sectionDiv.innerHTML = `
+                    <div>
+                        <div class="px-2 mb-2 text-xs uppercase tracking-wider font-bold text-emerald-500">
+                            ${sectionData.title}
+                        </div>
+                        <div class="space-y-1">
+                            ${sectionData.items.map(item => `
+                                <a href="${item.href}"
+                                   class="sidebar-link group flex items-center gap-3 px-3 py-2.5 rounded-lg text-softText/70 hover:text-softText hover:bg-pageBg transition-all">
+                                    <i class="fas ${item.icon} text-sm text-softText/60 group-hover:text-emerald-500 transition-colors"></i>
+                                    <span class="text-sm">${item.text}</span>
+                                </a>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                
+                sidebarNav.appendChild(sectionDiv);
+            }
+        }
+
+        // Show curve animation on login
+        function showLoginAnimation() {
+            curveAnimation.classList.add('active');
+            
+            setTimeout(() => {
+                curveAnimation.classList.remove('active');
+            }, 2000);
+        }
+
+        // Enhanced copy to clipboard function
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+            
+            // Create temporary input
+            const tempInput = document.createElement('input');
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            
+            // Select and copy
+            tempInput.select();
+            tempInput.setSelectionRange(0, 99999);
+            document.execCommand('copy');
+            
+            // Remove temporary input
+            document.body.removeChild(tempInput);
+            
+            // Show enhanced animation on button
+            const buttonId = 'copy' + elementId.charAt(0).toUpperCase() + elementId.slice(1) + 'Btn';
+            const button = document.getElementById(buttonId);
+            
+            const originalHTML = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            button.classList.add('copy-success');
+            button.classList.remove('bg-zinc-800');
+            button.classList.add('bg-emerald-600');
+            button.style.transform = 'scale(1.05)';
+            
+            // Show success message
+            showMessage('Copied to clipboard!', 'success');
+            
+            setTimeout(() => {
+                button.innerHTML = originalHTML;
+                button.classList.remove('copy-success');
+                button.classList.remove('bg-emerald-600');
+                button.classList.add('bg-zinc-800');
+                button.style.transform = 'scale(1)';
+            }, 2000);
+        }
+
+        // Authentication State Listener
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                // User is signed in
+                showLoginAnimation(); // Show curve animation
+                await updateUIForLoggedInUser(user);
+            } else {
+                // User is signed out
+                updateUIForLoggedOutUser();
+            }
+        });
+
+        // Show auth modal
+        function showAuthModal(tab = 'login') {
+            authModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            switchAuthTab(tab);
+        }
+
+        // Hide auth modal
+        function hideAuthModal() {
+            authModal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Switch between login/signup tabs
+        function switchAuthTab(tab) {
+            if (tab === 'login') {
+                loginTab.classList.add('active');
+                signupTab.classList.remove('active');
+                loginForm.classList.remove('hidden');
+                signupForm.classList.add('hidden');
+                document.getElementById('loginError').classList.add('hidden');
+                document.getElementById('signupError').classList.add('hidden');
+            } else {
+                signupTab.classList.add('active');
+                loginTab.classList.remove('active');
+                signupForm.classList.remove('hidden');
+                loginForm.classList.add('hidden');
+                document.getElementById('loginError').classList.add('hidden');
+                document.getElementById('signupError').classList.add('hidden');
+            }
+        }
+
+        // Handle login
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const loginError = document.getElementById('loginError');
+            const loginBtn = document.getElementById('loginBtn');
+            
+            // Show loading
+            loginBtn.innerHTML = '<span class="loading-spinner"></span> Signing in...';
+            loginBtn.disabled = true;
+            
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                hideAuthModal();
+                showMessage('Welcome back!', 'success');
+            } catch (error) {
+                console.error('Login error:', error);
+                let errorMessage = 'Login failed. Please check your credentials.';
+                
+                switch (error.code) {
+                    case 'auth/user-not-found':
+                        errorMessage = 'No account found with this email.';
+                        break;
+                    case 'auth/wrong-password':
+                        errorMessage = 'Incorrect password.';
+                        break;
+                    case 'auth/invalid-email':
+                        errorMessage = 'Invalid email address.';
+                        break;
+                    case 'auth/user-disabled':
+                        errorMessage = 'Account has been disabled.';
+                        break;
+                }
+                
+                loginError.querySelector('p').textContent = errorMessage;
+                loginError.classList.remove('hidden');
+                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In to Lessonfuse';
+                loginBtn.disabled = false;
+            }
+        }
+
+        // Handle signup
+        async function handleSignup(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('signupName').value;
+            const email = document.getElementById('signupEmail').value;
+            const phone = document.getElementById('signupPhone').value;
+            const password = document.getElementById('signupPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const signupError = document.getElementById('signupError');
+            const signupBtn = document.getElementById('signupBtn');
+            
+            // Validate
+            if (password !== confirmPassword) {
+                signupError.querySelector('p').textContent = 'Passwords do not match.';
+                signupError.classList.remove('hidden');
+                return;
+            }
+            
+            if (password.length < 6) {
+                signupError.querySelector('p').textContent = 'Password must be at least 6 characters.';
+                signupError.classList.remove('hidden');
+                return;
+            }
+            
+            // Show loading
+            signupBtn.innerHTML = '<span class="loading-spinner"></span> Creating account...';
+            signupBtn.disabled = true;
+            
+            try {
+                // Create user
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                // Update profile
+                await user.updateProfile({
+                    displayName: name
+                });
+                
+                // Save user data to Firebase
+                await database.ref('users/' + user.uid).set({
+                    uid: user.uid,
+                    displayName: name,
+                    email: email,
+                    phone: phone,
+                    createdAt: new Date().toISOString(),
+                    subscriptionStatus: 'pending',
+                    subscriptionType: 'yearly',
+                    paymentStatus: 'unpaid'
+                });
+                
+                hideAuthModal();
+                showMessage('Account created successfully!', 'success');
+            } catch (error) {
+                console.error('Signup error:', error);
+                let errorMessage = 'Error creating account. Please try again.';
+                
+                switch (error.code) {
+                    case 'auth/email-already-in-use':
+                        errorMessage = 'Email already in use. Please login instead.';
+                        break;
+                    case 'auth/invalid-email':
+                        errorMessage = 'Invalid email address.';
+                        break;
+                    case 'auth/weak-password':
+                        errorMessage = 'Password is too weak.';
+                        break;
+                }
+                
+                signupError.querySelector('p').textContent = errorMessage;
+                signupError.classList.remove('hidden');
+                signupBtn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
+                signupBtn.disabled = false;
+            }
+        }
+
+        // Update UI for logged in user
+        async function updateUIForLoggedInUser(user) {
+            authStatus.textContent = `Signed in as ${user.email}`;
+            authStatus.className = 'auth-status logged-in';
+            authButton.innerHTML = '<i class="fas fa-sign-out-alt mr-2"></i>Logout';
+            paymentStatus.classList.remove('hidden');
+            
+            // Update user info in mobile menu
+            document.getElementById('mobileUserName').textContent = user.displayName || 'User';
+            document.getElementById('mobileUserEmail').textContent = user.email;
+            document.getElementById('mobileUserInfo').classList.remove('hidden');
+            document.getElementById('mobileLogoutBtn').classList.remove('hidden');
+            
+            // Update user info in desktop sidebar
+            document.getElementById('desktopUserName').textContent = user.displayName || 'User';
+            document.getElementById('desktopUserEmail').textContent = user.email;
+            document.getElementById('desktopUserInfo').classList.remove('hidden');
+            document.getElementById('desktopLogoutBtn').classList.remove('hidden');
+            
+            // Show welcome message with user name
+            if (user.displayName) {
+                userName.textContent = user.displayName;
+                welcomeMessage.classList.remove('hidden');
+            }
+            
+            // Update contact number if available
+            const contactNumber = document.getElementById('contactNumber');
+            try {
+                const snapshot = await database.ref('users/' + user.uid).once('value');
+                const userData = snapshot.val();
+                if (userData && userData.phone) {
+                    contactNumber.value = userData.phone;
+                }
+                
+                // Check payment status
+                if (userData && userData.paymentStatus === 'paid') {
+                    // User has paid, show dashboard
+                    showDashboard();
+                } else {
+                    // User hasn't paid, show payment page
+                    showPaymentPage();
+                }
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+                showPaymentPage();
+            }
+            
+            // Render navigation menus
+            renderNavigationMenus();
+            
+            // Show sidebar on desktop ONLY (hidden on mobile)
+            const isDesktop = window.innerWidth >= 1024;
+            if (isDesktop) {
+                desktopSidebar.classList.remove('hidden');
+                mainContent.classList.add('lg:ml-64');
+            } else {
+                desktopSidebar.classList.add('hidden');
+                mainContent.classList.remove('lg:ml-64');
+            }
+        }
+
+        // Update UI for logged out user
+        function updateUIForLoggedOutUser() {
+            authStatus.textContent = 'Not Signed In';
+            authStatus.className = 'auth-status logged-out';
+            authButton.innerHTML = '<i class="fas fa-sign-in-alt mr-2"></i>Login';
+            paymentStatus.classList.add('hidden');
+            
+            // Hide user info in mobile menu
+            document.getElementById('mobileUserInfo').classList.add('hidden');
+            document.getElementById('mobileLogoutBtn').classList.add('hidden');
+            
+            // Hide user info in desktop sidebar
+            document.getElementById('desktopUserInfo').classList.add('hidden');
+            document.getElementById('desktopLogoutBtn').classList.add('hidden');
+            
+            // Hide desktop sidebar
+            desktopSidebar.classList.add('hidden');
+            mainContent.classList.remove('lg:ml-64');
+            
+            // Show landing page
+            showLandingPage();
+        }
+
+        // Show landing page
+        function showLandingPage() {
+            landingSection.classList.remove('hidden');
+            paymentSection.classList.remove('active');
+            paymentSection.classList.add('hidden');
+            dashboardSection.classList.add('hidden');
+        }
+
+        // Show payment page
+        function showPaymentPage() {
+            landingSection.classList.add('hidden');
+            paymentSection.classList.add('active');
+            paymentSection.classList.remove('hidden');
+            dashboardSection.classList.add('hidden');
+        }
+
+        // Show dashboard
+        function showDashboard() {
+            landingSection.classList.add('hidden');
+            paymentSection.classList.remove('active');
+            paymentSection.classList.add('hidden');
+            dashboardSection.classList.remove('hidden');
+        }
+
+        // File upload display
+        function handleFileUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const fileNameDisplay = document.getElementById('fileName');
+                const fileText = document.getElementById('fileText');
+                
+                // Check file size (10MB = 10 * 1024 * 1024 bytes)
+                if (file.size > 10 * 1024 * 1024) {
+                    alert('File size must be less than 10MB');
+                    this.value = '';
+                    fileNameDisplay.classList.add('hidden');
+                    return;
+                }
+                
+                // Check file type
+                const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+                if (!validTypes.includes(file.type)) {
+                    alert('Only PNG and JPG files are allowed');
+                    this.value = '';
+                    fileNameDisplay.classList.add('hidden');
+                    return;
+                }
+                
+                fileText.textContent = file.name + ' (' + formatFileSize(file.size) + ')';
+                fileNameDisplay.classList.remove('hidden');
+            }
+        }
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Enhanced Form submission handler with Firebase
+        document.getElementById('paymentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Check if user is authenticated
+            const user = auth.currentUser;
+            if (!user) {
+                showError('Please sign in first to submit payment.');
+                showAuthModal('login');
+                return;
+            }
+            
+            // Get form values
+            const contactNumber = document.getElementById('contactNumber').value;
+            const receiptFile = document.getElementById('receiptFile').files[0];
+            
+            // Validate
+            if (!contactNumber || !receiptFile) {
+                showError('Please fill all required fields and upload receipt.');
+                return;
+            }
+            
+            if (!/^\d+$/.test(contactNumber)) {
+                showError('Please enter a valid contact number.');
+                return;
+            }
+            
+            // Show loading
+            showLoading(true);
+            
+            try {
+                // Convert file to base64 for storage
+                const fileReader = new FileReader();
+                const filePromise = new Promise((resolve, reject) => {
+                    fileReader.onload = (e) => resolve(e.target.result);
+                    fileReader.onerror = (e) => reject(e);
+                    fileReader.readAsDataURL(receiptFile);
+                });
+                
+                const fileData = await filePromise;
+                
+                // Prepare payment data
+                const paymentInfo = {
+                    contactNumber: contactNumber,
+                    receiptFileName: receiptFile.name,
+                    receiptFileSize: receiptFile.size,
+                    receiptFileType: receiptFile.type,
+                    receiptData: fileData,
+                    submittedAt: new Date().toISOString()
+                };
+                
+                // Save payment data to Firebase
+                const paymentId = await savePaymentData(user, paymentInfo);
+                
+                // Update user's payment status
+                await database.ref('users/' + user.uid).update({
+                    paymentStatus: 'pending',
+                    paymentId: paymentId,
+                    lastPaymentAttempt: new Date().toISOString()
+                });
+                
+                // Show success message
+                showLoading(false);
+                document.getElementById('successMessage').classList.remove('hidden');
+                document.getElementById('errorMessage').classList.add('hidden');
+                
+                // Reset form after success
+                setTimeout(() => {
+                    document.getElementById('paymentForm').reset();
+                    document.getElementById('fileName').classList.add('hidden');
+                }, 3000);
+                
+            } catch (error) {
+                console.error('Payment submission error:', error);
+                showLoading(false);
+                showError('Error submitting payment. Please try again or contact support.');
+            }
+        });
+
+        // Save payment data to Firebase
+        function savePaymentData(user, paymentInfo) {
+            const paymentData = {
+                userId: user.uid,
+                userEmail: user.email,
+                userName: user.displayName || '',
+                contactNumber: paymentInfo.contactNumber,
+                amount: 150,
+                currency: 'MVR',
+                subscriptionType: 'yearly',
+                status: 'pending',
+                submittedAt: new Date().toISOString(),
+                ...paymentInfo
+            };
+            
+            const paymentId = database.ref().child('payments').push().key;
+            
+            return database.ref('payments/' + paymentId).set(paymentData)
+                .then(() => {
+                    console.log('Payment data saved successfully');
+                    return paymentId;
+                })
+                .catch((error) => {
+                    console.error('Error saving payment data:', error);
+                    throw error;
+                });
+        }
+
+        // Show/hide loading
+        function showLoading(show) {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const submitBtn = document.getElementById('submitPaymentBtn');
+            
+            if (show) {
+                loadingIndicator.classList.remove('hidden');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            } else {
+                loadingIndicator.classList.add('hidden');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Payment Details';
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorElement = document.getElementById('errorText');
+            errorElement.textContent = message;
+            document.getElementById('errorMessage').classList.remove('hidden');
+            document.getElementById('successMessage').classList.add('hidden');
+        }
+
+        // Show generic message
+        function showMessage(text, type = 'info') {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `fixed top-20 right-4 p-4 rounded-lg z-50 ${
+                type === 'success' ? 'bg-emerald-900/90 text-emerald-300' :
+                type === 'error' ? 'bg-red-900/90 text-red-300' :
+                'bg-zinc-900/90 text-zinc-300'
+            }`;
+            messageDiv.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                    <span>${text}</span>
+                </div>
+            `;
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
+
+        // Handle window resize to show/hide sidebar appropriately
+        function handleResize() {
+            const user = auth.currentUser;
+            if (user) {
+                const isDesktop = window.innerWidth >= 1024;
+                if (isDesktop) {
+                    desktopSidebar.classList.remove('hidden');
+                    mainContent.classList.add('lg:ml-64');
+                } else {
+                    desktopSidebar.classList.add('hidden');
+                    mainContent.classList.remove('lg:ml-64');
+                }
+            }
+        }
+
+        // Initialize with current scroll position for sticky nav
+        window.addEventListener('scroll', function() {
+            const stickyNav = document.getElementById('sticky-nav');
+            if (window.scrollY > 50) {
+                stickyNav.classList.add('bg-black/95');
+            } else {
+                stickyNav.classList.remove('bg-black/95');
+            }
+        });
+
+        // Listen for window resize
+        window.addEventListener('resize', handleResize);
+
+        // Trigger initial check
+        window.dispatchEvent(new Event('scroll'));
+        handleResize(); // Initial check on load
+    </script>
+   
+</body>
+</html>
